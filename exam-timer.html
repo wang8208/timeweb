@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>定期評量看板</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f6f0e5; --card:#fffcf7; --ink:#4a3b2e; --soft:#8a7967; --line:#dfd0bb;
+  --clay:#f0e4d2; --sage:#e2e7d6; --sage-d:#8a9a6e; --terra:#b86f4f; --warn:#c4503a;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{
+  font-family:"Huninn","jf open 粉圓","PingFang TC","Microsoft JhengHei",sans-serif;
+  color:var(--ink); background:var(--bg); min-height:100vh; overflow-x:hidden;
+}
+.wrap{max-width:1500px;margin:0 auto;padding:clamp(14px,2vw,28px);display:flex;flex-direction:column;gap:clamp(14px,1.8vw,24px);min-height:100vh}
+h1{margin:0;font-weight:normal;font-size:clamp(28px,3.6vw,56px);letter-spacing:4px;text-align:center}
+
+main{display:grid;grid-template-columns:1.7fr 1fr;gap:clamp(14px,1.8vw,24px);flex:1}
+@media (max-width:900px){main{grid-template-columns:1fr}}
+.card{background:var(--card);border:2px solid var(--line);border-radius:24px;padding:clamp(18px,2.2vw,34px)}
+.tag{font-size:clamp(16px,1.6vw,24px);color:var(--soft);letter-spacing:2px}
+
+.time{display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:clamp(8px,1.4vw,20px)}
+.time .date{font-size:clamp(18px,2.2vw,34px);color:var(--soft)}
+.time .now{font-size:clamp(56px,11.5vw,184px);line-height:1;font-variant-numeric:tabular-nums;letter-spacing:2px}
+.time .src{font-size:clamp(13px,1.2vw,17px);color:var(--soft)}
+.subj{margin-top:clamp(6px,1.4vw,22px);display:flex;flex-direction:column;align-items:center;gap:12px}
+.subj .cur{font-size:clamp(36px,5.4vw,84px);line-height:1.1;letter-spacing:4px;min-height:1.1em}
+.subj .cur.none{color:var(--line)}
+.pills{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.pill{font-family:inherit;font-size:clamp(15px,1.4vw,22px);color:var(--ink);background:var(--card);border:2px solid var(--line);border-radius:999px;padding:6px 18px;cursor:pointer}
+.pill:hover{background:var(--clay)}
+.pill.on{background:var(--sage);border-color:var(--sage-d)}
+
+.att{display:flex;flex-direction:column;gap:clamp(12px,1.6vw,22px)}
+.nums{display:grid;grid-template-columns:1fr 1fr;gap:clamp(10px,1.2vw,18px)}
+.num{border-radius:18px;padding:clamp(10px,1.2vw,18px);text-align:center;background:var(--clay)}
+.num.b{background:var(--sage)}
+.num .lbl{font-size:clamp(18px,1.8vw,28px);color:var(--soft)}
+.num .val{font-size:clamp(48px,5.6vw,92px);line-height:1.05;font-variant-numeric:tabular-nums}
+.num .val small{font-size:.4em;margin-left:4px}
+.absent{border:2px solid var(--line);border-radius:18px;padding:clamp(10px,1.2vw,18px);flex:1}
+.absent .lbl{font-size:clamp(18px,1.8vw,28px);display:flex;justify-content:space-between;align-items:baseline}
+.absent .lbl small{font-size:.75em;color:var(--soft)}
+.chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+.chip{min-width:clamp(46px,4.4vw,68px);height:clamp(46px,4.4vw,68px);border-radius:50%;background:var(--clay);
+  display:flex;align-items:center;justify-content:center;font-size:clamp(22px,2.4vw,36px);font-variant-numeric:tabular-nums;padding:0 6px}
+.allhere{font-size:clamp(22px,2.4vw,36px);color:var(--soft);margin-top:12px}
+
+footer{text-align:center;font-size:clamp(20px,2.2vw,34px);letter-spacing:2px}
+.tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:center}
+.btn{font-family:inherit;font-size:clamp(14px,1.2vw,18px);color:var(--ink);background:var(--card);border:2px solid var(--line);border-radius:999px;padding:8px 18px;cursor:pointer}
+.btn:hover{background:var(--clay)}
+.btn:focus-visible,input:focus-visible,select:focus-visible,.pill:focus-visible{outline:3px solid var(--terra);outline-offset:2px}
+.btn.primary{background:var(--terra);border-color:var(--terra);color:#fff}
+.btn.primary:hover{background:#a55f41}
+
+.mask{position:fixed;inset:0;background:rgba(74,59,46,.35);display:none;align-items:center;justify-content:center;z-index:20;padding:16px}
+.mask.show{display:flex}
+.modal{background:var(--card);border-radius:24px;width:min(560px,100%);max-height:92vh;overflow:auto;padding:24px 28px}
+.modal h2{margin:0 0 14px;font-weight:normal;font-size:26px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:17px;margin-bottom:6px}
+.field input,.field select{font-family:inherit;font-size:19px;color:var(--ink);width:100%;padding:9px 12px;border:2px solid var(--line);border-radius:12px;background:#fff;outline:none}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:560px){.row{grid-template-columns:1fr}}
+.hint{font-size:14px;color:var(--soft);margin:4px 0 0;line-height:1.6}
+.actions{display:flex;justify-content:flex-end;gap:10px;margin-top:8px;flex-wrap:wrap}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1 id="examName">期中定期評量</h1>
+
+  <main>
+    <section class="card time">
+      <div class="tag">中原標準時間</div>
+      <div class="date" id="date"></div>
+      <div class="now" id="now">--:--:--</div>
+      <div class="src" id="src"></div>
+      <div class="subj">
+        <div class="cur none" id="cur">請選擇科目</div>
+        <div class="pills" id="pills" role="group" aria-label="選擇目前考試科目"></div>
+      </div>
+    </section>
+
+    <section class="card att">
+      <div class="tag">出缺席</div>
+      <div class="nums">
+        <div class="num"><div class="lbl">全班人數</div><div class="val"><span id="expected">－</span><small>人</small></div></div>
+        <div class="num b"><div class="lbl">實到</div><div class="val"><span id="actual">－</span><small>人</small></div></div>
+      </div>
+      <div class="absent">
+        <div class="lbl">缺席座號 <small id="absentCount"></small></div>
+        <div class="chips" id="chips"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer id="footer"></footer>
+
+  <div class="tools">
+    <button class="btn" id="openSet" type="button">設定</button>
+    <button class="btn" id="fs" type="button">全螢幕</button>
+  </div>
+</div>
+
+<div class="mask" id="mask">
+  <div class="modal" role="dialog" aria-label="設定">
+    <h2>設定</h2>
+    <div class="field">
+      <label for="iExam">考試名稱</label>
+      <select id="iExam">
+        <option value="期中定期評量">期中定期評量</option>
+        <option value="期末定期評量">期末定期評量</option>
+      </select>
+    </div>
+    <div class="row">
+      <div class="field"><label for="iExpected">全班人數</label><input id="iExpected" type="number" min="0" inputmode="numeric"></div>
+      <div class="field"><label for="iActual">實到人數</label><input id="iActual" type="number" min="0" inputmode="numeric" placeholder="自動計算"></div>
+    </div>
+    <div class="field">
+      <label for="iAbsent">缺席座號</label>
+      <input id="iAbsent" placeholder="例如：3, 12, 25（空白或逗號分隔）">
+      <div class="hint">實到留空時，會自動用「全班人數 − 缺席」計算</div>
+    </div>
+    <div class="field"><label for="iFooter">底部小叮嚀</label><input id="iFooter" placeholder="可留空"></div>
+    <div class="actions">
+      <button class="btn" id="cancelSet" type="button">取消</button>
+      <button class="btn primary" id="saveSet" type="button">套用</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var $ = function(id){ return document.getElementById(id); };
+  var WD = ["日","一","二","三","四","五","六"];
+  var NAMES = ["國語","自然","英文","社會","數學"];
+  var KEY = "examBoard.v5";
+
+  var DEF = {
+    exam:"期中定期評量", subject:"", expected:"", actual:"", absent:"",
+    footer:"請記得確認每一面都有書寫完畢!!"
+  };
+  var S = JSON.parse(JSON.stringify(DEF));
+  try{ var raw = localStorage.getItem(KEY); if(raw) S = Object.assign(S, JSON.parse(raw)); }catch(e){}
+  if(S.exam !== "期中定期評量" && S.exam !== "期末定期評量") S.exam = DEF.exam;
+  function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+  function pad(n){ return (n<10?"0":"")+n; }
+
+  /* ---------- 中原標準時間（台灣 UTC+8） ----------
+     優先向網路校時；連不上就用這台電腦的時間，但一律以台灣時區顯示 */
+  var offset = 0, synced = false;
+  function withTimeout(url, ms){
+    var ctl = typeof AbortController !== "undefined" ? new AbortController() : null;
+    var t = setTimeout(function(){ if(ctl) ctl.abort(); }, ms);
+    return fetch(url, {cache:"no-store", signal: ctl ? ctl.signal : undefined}).then(function(r){ clearTimeout(t); return r.json(); });
+  }
+  function trySource(i){
+    var t0 = Date.now();
+    var p;
+    if(i === 0) p = withTimeout("https://worldtimeapi.org/api/timezone/Asia/Taipei", 4000).then(function(j){ return j.unixtime*1000; });
+    else p = withTimeout("https://timeapi.io/api/Time/current/zone?timeZone=Asia/Taipei", 4000).then(function(j){ return Date.parse(j.dateTime.split(".")[0]+"+08:00"); });
+    return p.then(function(server){
+      var t1 = Date.now();
+      if(!isFinite(server)) throw new Error("bad");
+      offset = server - (t0+t1)/2; synced = true;
+    });
+  }
+  function sync(){
+    trySource(0).catch(function(){ return trySource(1); }).then(function(){ updateSrc(); }, function(){ synced = false; updateSrc(); });
+  }
+  function updateSrc(){ $("src").textContent = synced ? "已與網路校時" : "使用這台電腦的時間"; }
+  function tpe(){ return new Date(Date.now() + offset + 8*3600*1000); }   /* 用 getUTC* 讀出台灣時間 */
+
+  function render(){
+    var t = tpe();
+    $("date").textContent = t.getUTCFullYear()+"年"+(t.getUTCMonth()+1)+"月"+t.getUTCDate()+"日 星期"+WD[t.getUTCDay()];
+    $("now").textContent = pad(t.getUTCHours())+":"+pad(t.getUTCMinutes())+":"+pad(t.getUTCSeconds());
+  }
+
+  /* ---------- 科目 ---------- */
+  function renderSubject(){
+    var cur = $("cur");
+    cur.textContent = S.subject || "請選擇科目"; cur.className = "cur"+(S.subject?"":" none");
+    document.querySelectorAll(".pill").forEach(function(b){
+      var on = b.textContent === S.subject; b.className = "pill"+(on?" on":""); b.setAttribute("aria-pressed", on);
+    });
+  }
+  NAMES.forEach(function(n){
+    var b = document.createElement("button"); b.type = "button"; b.className = "pill"; b.textContent = n;
+    b.onclick = function(){ S.subject = (S.subject===n) ? "" : n; save(); renderSubject(); };
+    $("pills").appendChild(b);
+  });
+
+  /* ---------- 出缺席 ---------- */
+  function parseAbsent(str){
+    var seen = {}, out = [];
+    String(str||"").split(/[,\s，、]+/).forEach(function(t){
+      var n = parseInt(t,10); if(n>0 && !seen[n]){ seen[n]=1; out.push(n); }
+    });
+    return out.sort(function(a,b){ return a-b; });
+  }
+  function renderAtt(){
+    var ab = parseAbsent(S.absent), hasExp = S.expected!=="" && S.expected!=null && !isNaN(parseInt(S.expected,10));
+    var exp = hasExp ? parseInt(S.expected,10) : null, act = null;
+    if(S.actual!=="" && S.actual!=null && !isNaN(parseInt(S.actual,10))) act = parseInt(S.actual,10);
+    else if(hasExp) act = Math.max(0, exp-ab.length);
+    $("expected").textContent = hasExp ? exp : "－"; $("actual").textContent = act===null ? "－" : act;
+    $("absentCount").textContent = ab.length ? "共 "+ab.length+" 人" : "";
+    var c = $("chips"); c.innerHTML = "";
+    if(!ab.length){ c.innerHTML = '<div class="allhere">全員到齊</div>'; return; }
+    ab.forEach(function(n){ var d = document.createElement("div"); d.className = "chip"; d.textContent = n; c.appendChild(d); });
+  }
+  function renderText(){ $("examName").textContent = S.exam; $("footer").textContent = S.footer || ""; document.title = S.exam; }
+
+  /* ---------- 設定 ---------- */
+  $("openSet").onclick = function(){
+    $("iExam").value = S.exam; $("iExpected").value = S.expected; $("iActual").value = S.actual;
+    $("iAbsent").value = S.absent; $("iFooter").value = S.footer;
+    $("mask").classList.add("show");
+  };
+  $("cancelSet").onclick = function(){ $("mask").classList.remove("show"); };
+  $("saveSet").onclick = function(){
+    S.exam = $("iExam").value; S.expected = $("iExpected").value; S.actual = $("iActual").value;
+    S.absent = $("iAbsent").value; S.footer = $("iFooter").value;
+    save(); renderText(); renderAtt(); $("mask").classList.remove("show");
+  };
+  $("fs").onclick = function(){
+    try{ if(document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen(); }catch(e){}
+  };
+
+  renderText(); renderAtt(); renderSubject(); updateSrc(); render();
+  setInterval(render, 250);
+})();
+</script>
+</body>
+</html>
